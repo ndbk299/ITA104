@@ -1,0 +1,238 @@
+
+CREATE TABLE customers (
+  customer_id SERIAL PRIMARY KEY,
+  full_name VARCHAR(255) NOT NULL,
+  phone_number VARCHAR(15) UNIQUE,
+  address VARCHAR(255)
+);
+
+CREATE TABLE products (
+  product_id SERIAL PRIMARY KEY,
+  product_name VARCHAR(255) NOT NULL,
+  price DECIMAL(10,2) NOT NULL
+);
+
+CREATE TABLE orders (
+  order_id SERIAL PRIMARY KEY,
+  customer_id INT REFERENCES customers(customer_id),
+  order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE order_items (
+  order_item_id SERIAL PRIMARY KEY,
+  order_id INT REFERENCES orders(order_id),
+  product_id INT REFERENCES products(product_id),
+  quantity INT CHECK (quantity > 0),
+  price DECIMAL(10,2) NOT NULL
+);
+
+INSERT INTO customers (full_name, phone_number, address) VALUES
+('Nguyễn Văn A', '0911111111', '123 Trần Phú, Hà Nội'),
+('Trần Thị B', '0912222222', '456 Lê Lợi, TP.HCM'),
+('Phạm Văn C', '0913333333', '789 Nguyễn Huệ, Đà Nẵng'),
+('Lê Thị D', '0914444444', '12 Hai Bà Trưng, Hà Nội'),
+('Hoàng Văn E', '0915555555', '34 Điện Biên Phủ, Hải Phòng'),
+('Đỗ Thị F', '0916666666', '56 Võ Văn Kiệt, Cần Thơ'),
+('Ngô Văn G', '0917777777', '78 Nguyễn Trãi, Hà Nội'),
+('Bùi Thị H', '0918888888', '90 Lý Thường Kiệt, Huế'),
+('Vũ Văn I', '0919999999', '11 Phan Chu Trinh, Quảng Ninh'),
+('Đặng Thị K', '0920000000', '22 Nguyễn Văn Linh, Đà Nẵng');
+
+INSERT INTO products (product_name, price) VALUES
+('Sữa tươi Vinamilk 1L', 30000),
+('Bánh mì Việt Nam', 15000),
+('Nước ngọt Coca-Cola lon', 10000),
+('Snack Oishi', 8000),
+('Nước suối Aquafina 500ml', 7000),
+('Mì gói Hảo Hảo', 3500),
+('Trứng gà ta (10 quả)', 28000),
+('Gạo ST25 5kg', 150000),
+('Dầu ăn Neptune 1L', 45000),
+('Nước mắm Nam Ngư 500ml', 25000),
+('Bột giặt OMO 1kg', 55000),
+('Kem đánh răng Colgate 200g', 25000),
+('Khăn giấy Pulppy', 18000),
+('Sữa chua Vinamilk hộp', 6000),
+('Phô mai Con Bò Cười', 35000),
+('Cà phê G7 hòa tan', 45000),
+('Trà Lipton túi lọc', 40000),
+('Nước tăng lực Red Bull', 12000),
+('Bánh quy Kinh Đô', 25000),
+('Socola KitKat', 30000);
+
+SELECT product_name AS TenSanPham, price AS DonGia FROM products;
+
+SELECT full_name, phone_number 
+FROM customers 
+WHERE full_name LIKE '%Văn%';
+
+SELECT product_name, price 
+FROM products 
+ORDER BY price DESC;
+
+SELECT product_name, price 
+FROM products 
+ORDER BY price ASC 
+LIMIT 3;
+
+CREATE TABLE suppliers (
+  supplier_id SERIAL PRIMARY KEY,
+  supplier_name VARCHAR(255) NOT NULL,
+  contact_phone VARCHAR(15) UNIQUE
+);
+
+ALTER TABLE suppliers ADD COLUMN email VARCHAR(100);
+ALTER TABLE products ADD COLUMN supplier_id INT;
+ALTER TABLE products ADD CONSTRAINT fk_supplier FOREIGN KEY (supplier_id) REFERENCES suppliers(supplier_id);
+
+INSERT INTO suppliers (supplier_name, contact_phone, email) VALUES
+('Công ty Sữa Việt Nam','0987654321','contact@vinamilk.vn'),
+('Công ty Thực phẩm Á Châu','0912345678','contact@acecook.vn');
+
+UPDATE suppliers SET contact_phone='0911112222' WHERE supplier_name='Công ty Thực phẩm Á Châu';
+
+DELETE FROM products WHERE product_id=5;
+
+CREATE TABLE test_table (id INT);
+ALTER TABLE suppliers DROP COLUMN contact_phone;
+DROP TABLE test_table;
+ALTER TABLE suppliers ADD COLUMN contact_phone VARCHAR(15) UNIQUE;
+
+UPDATE suppliers 
+SET contact_phone = '0987654321' 
+WHERE supplier_name = 'Công ty Sữa Việt Nam';
+
+UPDATE suppliers 
+SET contact_phone = '0911112222' 
+WHERE supplier_name = 'Công ty Thực phẩm Á Châu';
+
+
+
+SELECT oi.order_id, p.product_name, oi.quantity, oi.price
+FROM order_items oi
+INNER JOIN products p ON oi.product_id = p.product_id;
+
+SELECT c.full_name, o.order_id
+FROM customers c
+LEFT JOIN orders o ON c.customer_id = o.customer_id;
+
+SELECT p.product_name, oi.order_id
+FROM order_items oi
+RIGHT JOIN products p ON oi.product_id = p.product_id;
+
+SELECT full_name AS ContactName, phone_number AS PhoneNumber FROM customers
+UNION
+SELECT supplier_name, contact_phone FROM suppliers;
+
+SELECT product_name, price 
+FROM products 
+WHERE supplier_id IN (SELECT supplier_id FROM suppliers WHERE supplier_name='Công ty Sữa Việt Nam');
+
+SELECT product_name, price, (SELECT AVG(price) FROM products) AS average_price 
+FROM products;
+
+SELECT order_id 
+FROM (
+  SELECT order_id, SUM(quantity*price) AS total_value 
+  FROM order_items GROUP BY order_id
+) t WHERE total_value > 50000;
+
+SELECT supplier_name 
+FROM suppliers s 
+WHERE EXISTS (SELECT 1 FROM products p WHERE p.supplier_id = s.supplier_id);
+
+SELECT COUNT(*) AS SoLuongSanPham,
+       AVG(price) AS GiaTrungBinh,
+       MIN(price) AS GiaThapNhat,
+       MAX(price) AS GiaCaoNhat
+FROM products;
+
+SELECT s.supplier_name, COUNT(p.product_id) AS SoLuongSP
+FROM suppliers s
+JOIN products p ON s.supplier_id = p.supplier_id
+GROUP BY s.supplier_name
+HAVING COUNT(p.product_id) > 1;
+
+SELECT order_id, TO_CHAR(order_date,'DD/MM/YYYY') AS order_date
+FROM orders
+WHERE EXTRACT(YEAR FROM order_date)=2025 AND EXTRACT(MONTH FROM order_date)=10;
+
+SELECT c.full_name, SUM(oi.quantity*oi.price) AS tong_chi_tieu
+FROM customers c
+JOIN orders o ON c.customer_id=o.customer_id
+JOIN order_items oi ON o.order_id=oi.order_id
+GROUP BY c.full_name
+HAVING SUM(oi.quantity*oi.price) > 100000
+ORDER BY tong_chi_tieu DESC;
+
+SELECT COUNT(*) AS SoLuongSanPham,
+       AVG(price) AS GiaTrungBinh,
+       MIN(price) AS GiaThapNhat,
+       MAX(price) AS GiaCaoNhat
+FROM products;
+
+SELECT s.supplier_name, COUNT(p.product_id) AS SoLuongSP
+FROM suppliers s
+JOIN products p ON s.supplier_id = p.supplier_id
+GROUP BY s.supplier_name
+HAVING COUNT(p.product_id) > 1;
+
+SELECT order_id, TO_CHAR(order_date,'DD/MM/YYYY') AS order_date
+FROM orders
+WHERE EXTRACT(YEAR FROM order_date)=2025 AND EXTRACT(MONTH FROM order_date)=10;
+
+SELECT c.full_name, SUM(oi.quantity*oi.price) AS tong_chi_tieu
+FROM customers c
+JOIN orders o ON c.customer_id=o.customer_id
+JOIN order_items oi ON o.order_id=oi.order_id
+GROUP BY c.full_name
+HAVING SUM(oi.quantity*oi.price) > 100000
+ORDER BY tong_chi_tieu DESC;
+
+EXPLAIN ANALYZE SELECT * FROM customers WHERE phone_number = '0910099999';
+
+CREATE INDEX idx_customers_phone ON customers(phone_number);
+EXPLAIN ANALYZE SELECT * FROM customers WHERE phone_number = '0910099999';
+DROP INDEX IF EXISTS idx_customers_phone;
+
+EXPLAIN ANALYZE
+INSERT INTO customers (full_name, phone_number, address)
+VALUES ('Test Index User', '0999999999', '123 Test Index');
+
+CREATE INDEX idx_customers_address ON customers(address);
+EXPLAIN
+SELECT * FROM customers
+WHERE address = 'Address 500' OR phone_number LIKE '091001%';
+
+SELECT product_name, price, AVG(price) OVER() AS avg_overall_price
+FROM products;
+
+ALTER TABLE products ADD COLUMN category VARCHAR(100);
+UPDATE products SET category = 'Đồ uống' WHERE product_id IN (1,3,5,16,17,18);
+UPDATE products SET category = 'Thực phẩm' WHERE product_id IN (2,4,6,7,8,14,15,19,20);
+UPDATE products SET category = 'Gia vị' WHERE product_id IN (9,10);
+UPDATE products SET category = 'Hóa phẩm' WHERE product_id IN (11,12,13);
+
+SELECT category, product_name, price,
+       AVG(price) OVER(PARTITION BY category) AS avg_category_price
+FROM products;
+
+SELECT product_name, price,
+       ROW_NUMBER() OVER(ORDER BY price DESC) AS row_num,
+       RANK() OVER(ORDER BY price DESC) AS rank_num,
+       DENSE_RANK() OVER(ORDER BY price DESC) AS dense_rank_num
+FROM products;
+
+WITH daily_revenue AS (
+  SELECT o.order_date, SUM(oi.quantity*oi.price) AS total_daily_revenue
+  FROM orders o JOIN order_items oi ON o.order_id=oi.order_id
+  GROUP BY o.order_date
+)
+SELECT order_date, total_daily_revenue,
+       SUM(total_daily_revenue) OVER(ORDER BY order_date) AS running_total_revenue
+FROM daily_revenue;
+
+
+
+
+
