@@ -1,0 +1,183 @@
+
+CREATE TABLE product_categories (
+    category_id SERIAL PRIMARY KEY,
+    category_name VARCHAR(100) NOT NULL UNIQUE
+);
+
+CREATE TABLE suppliers (
+    supplier_id SERIAL PRIMARY KEY,
+    supplier_name VARCHAR(150) NOT NULL,
+    contact_info VARCHAR(255)
+);
+
+CREATE TABLE products (
+    product_id SERIAL PRIMARY KEY,
+    product_name VARCHAR(150) NOT NULL,
+    price DECIMAL(12,2) NOT NULL,
+    category_id INT REFERENCES product_categories(category_id),
+    supplier_id INT REFERENCES suppliers(supplier_id)
+);
+
+CREATE TABLE customers (
+    customer_id SERIAL PRIMARY KEY,
+    customer_name VARCHAR(150) NOT NULL,
+    phone VARCHAR(20),
+    email VARCHAR(100) UNIQUE,
+    address VARCHAR(255)
+);
+
+CREATE TABLE employees (
+    employee_id SERIAL PRIMARY KEY,
+    emp_name VARCHAR(150) NOT NULL,
+    position VARCHAR(50),
+    hire_date DATE DEFAULT CURRENT_DATE
+);
+
+CREATE TABLE promotions (
+    promo_id SERIAL PRIMARY KEY,
+    promo_name VARCHAR(150),
+    description TEXT,
+    discount_percent DECIMAL(5,2),
+    start_date DATE,
+    end_date DATE
+);
+
+CREATE TABLE orders (
+    order_id SERIAL PRIMARY KEY,
+    customer_id INT REFERENCES customers(customer_id),
+    employee_id INT REFERENCES employees(employee_id),
+    promo_id INT REFERENCES promotions(promo_id),
+    order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE order_items (
+    order_id INT REFERENCES orders(order_id),
+    product_id INT REFERENCES products(product_id),
+    quantity INT CHECK (quantity > 0),
+    price_at_purchase DECIMAL(12,2),
+    PRIMARY KEY (order_id, product_id)
+);
+
+INSERT INTO product_categories (category_name) VALUES
+('Đồ uống'),
+('Thực phẩm khô'),
+('Gia vị'),
+('Đồ gia dụng'),
+('Đồ điện tử');
+
+INSERT INTO suppliers (supplier_name, contact_info) VALUES
+('Công ty TNHH Thực phẩm Hảo Hạng', 'contact@haohang.vn'),
+('Công ty TNHH Điện tử Việt', 'contact@dientuviet.vn'),
+('Công ty TNHH Gia dụng An Bình', 'contact@giadunganbinh.vn'),
+('Công ty TNHH Nước giải khát Fresh', 'contact@fresh.vn'),
+('Công ty TNHH Gia vị Việt', 'contact@giaviviet.vn');
+
+INSERT INTO promotions (promo_name, description, discount_percent, start_date, end_date) VALUES
+('Tết 2025', 'Giảm giá 10% cho tất cả sản phẩm', 10, '2025-01-15', '2025-02-15'),
+('Hè sôi động', 'Giảm 15% cho đồ uống', 15, '2025-06-01', '2025-06-30'),
+('Black Friday', 'Giảm 20% cho sản phẩm điện tử', 20, '2025-11-25', '2025-11-30');
+
+INSERT INTO employees (emp_name, position, hire_date) VALUES
+('Nguyễn Văn A', 'Thu ngân', '2023-03-01'),
+('Trần Thị B', 'Quản lý kho', '2022-07-15'),
+('Lê Văn C', 'Thu ngân', '2024-01-10'),
+('Phạm Thị D', 'Bán hàng', '2023-05-20'),
+('Hoàng Văn E', 'Bán hàng', '2023-09-12'),
+('Đỗ Thị F', 'Thu ngân', '2024-02-01'),
+('Bùi Văn G', 'Quản lý chi nhánh', '2021-11-05'),
+('Đặng Thị H', 'Bán hàng', '2023-08-18'),
+('Vũ Văn I', 'Thu ngân', '2022-12-10'),
+('Nguyễn Thị J', 'Kế toán', '2021-06-25');
+
+INSERT INTO customers (customer_name, phone, email, address) VALUES
+('Nguyễn Minh Khang', '0901234567', 'khang@gmail.com', 'Hà Nội'),
+('Trần Thị Lan', '0912345678', 'lan@gmail.com', 'Hồ Chí Minh'),
+('Lê Văn Nam', '0923456789', 'nam@gmail.com', 'Đà Nẵng'),
+('Phạm Thị Hoa', '0934567890', 'hoa@gmail.com', 'Hải Phòng'),
+('Hoàng Văn Bình', '0945678901', 'binh@gmail.com', 'Cần Thơ'),
+('Đỗ Thị Mai', '0956789012', 'mai@gmail.com', 'Huế'),
+('Bùi Văn Tùng', '0967890123', 'tung@gmail.com', 'Nha Trang'),
+('Đặng Thị Hương', '0978901234', 'huong@gmail.com', 'Quảng Ninh'),
+('Vũ Văn Phúc', '0989012345', 'phuc@gmail.com', 'Nam Định'),
+('Nguyễn Thị Trang', '0990123456', 'trang@gmail.com', 'Bắc Ninh');
+
+INSERT INTO products (product_name, price, category_id, supplier_id) VALUES
+('Nước suối Fresh 500ml', 5000, 1, 4),
+('Mì gói Hảo Hạng', 7000, 2, 1),
+('Muối i-ốt Việt', 4000, 3, 5),
+('Nồi cơm điện An Bình', 850000, 4, 3),
+('Tivi Samsung 43 inch', 7500000, 5, 2),
+('Cà phê hòa tan Fresh', 25000, 1, 4),
+('Bánh quy Hảo Hạng', 30000, 2, 1),
+('Dầu ăn Việt', 45000, 3, 5),
+('Máy xay sinh tố An Bình', 650000, 4, 3),
+('Điện thoại Samsung Galaxy A15', 4500000, 5, 2);
+
+INSERT INTO orders (customer_id, employee_id, promo_id, order_date) VALUES
+(1, 1, 1, '2025-01-20'),
+(2, 4, 2, '2025-06-10'),
+(3, 5, NULL, '2025-07-05'),
+(4, 2, 3, '2025-11-26'),
+(5, 3, NULL, '2025-03-15');
+
+INSERT INTO order_items (order_id, product_id, quantity, price_at_purchase) VALUES
+(1, 1, 10, 5000),
+(1, 2, 5, 7000),
+(2, 6, 3, 25000),
+(2, 7, 2, 30000),
+(3, 8, 1, 45000),
+(4, 5, 1, 7500000),
+(4, 9, 1, 650000),
+(5, 3, 2, 4000),
+(5, 10, 1, 4500000);
+
+SELECT o.order_id, c.customer_name, e.emp_name, o.order_date,
+       SUM(oi.quantity * oi.price_at_purchase) AS total_amount
+FROM orders o
+JOIN customers c ON o.customer_id = c.customer_id
+JOIN employees e ON o.employee_id = e.employee_id
+JOIN order_items oi ON o.order_id = oi.order_id
+GROUP BY o.order_id, c.customer_name, e.emp_name, o.order_date
+ORDER BY o.order_date DESC
+LIMIT 10;
+
+SELECT pc.category_name, SUM(oi.quantity * oi.price_at_purchase) AS total_revenue
+FROM order_items oi
+JOIN products p ON oi.product_id = p.product_id
+JOIN product_categories pc ON p.category_id = pc.category_id
+GROUP BY pc.category_name
+HAVING SUM(oi.quantity * oi.price_at_purchase) > 1000000
+ORDER BY total_revenue DESC;
+
+SELECT product_name, price
+FROM products
+WHERE supplier_id = (
+    SELECT supplier_id
+    FROM suppliers
+    WHERE supplier_name = 'Công ty Thực phẩm Hảo Hạng'
+);
+
+SELECT e.emp_name,
+       SUM(oi.quantity * oi.price_at_purchase) AS total_sales,
+       DENSE_RANK() OVER (ORDER BY SUM(oi.quantity * oi.price_at_purchase) DESC) AS rank
+FROM employees e
+JOIN orders o ON e.employee_id = o.employee_id
+JOIN order_items oi ON o.order_id = oi.order_id
+WHERE EXTRACT(MONTH FROM o.order_date) = 10
+  AND EXTRACT(YEAR FROM o.order_date) = 2025
+GROUP BY e.emp_name;
+
+EXPLAIN ANALYZE
+SELECT * FROM customers WHERE email = 'abc@example.com';
+
+CREATE INDEX idx_customers_email ON customers(email);
+
+EXPLAIN ANALYZE
+SELECT * FROM customers WHERE email = 'abc@example.com';
+
+DROP INDEX IF EXISTS idx_customers_email
+
+
+
+
+
